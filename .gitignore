@@ -1,0 +1,12 @@
+node_modules/
+package-lock.json
+/.deploy
+
+app/.idea
+app/.idea/*
+*.xml
+settings.json
+.DS_Store
+server/private
+*.iml
+.npmrc
