@@ -1,4 +1,4 @@
-## mup-aws-beanstalk
+## @activitree/mup-aws-beanstalk
 
 Plugin for Meteor Up to deploy using AWS Beanstalk.
 
