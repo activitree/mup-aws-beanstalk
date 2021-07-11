@@ -485,7 +485,7 @@ export async function reconfig(api) {
       EnvironmentName: environment,
       Description: `Environment for ${config.app.name}, managed by Meteor Up`,
       VersionLabel: version.toString(),
-      SolutionStackName: '64bit Amazon Linux 2 v5.4.1 running Node.js 14',
+      SolutionStackName: '64bit Amazon Linux 2 v5.4.2 running Node.js 14',
       OptionSettings: desiredEbConfig.OptionSettings
     }).promise();
 
