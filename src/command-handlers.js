@@ -477,7 +477,7 @@ export async function reconfig(api) {
     const {
       SolutionStacks
     } = await beanstalk.listAvailableSolutionStacks().promise();
-    const solutionStack = SolutionStacks.find(name => name.endsWith('running Node.js'));
+    const solutionStack = SolutionStacks.find(name => name.includes('running Node.js'));
 
     const [version] = await ebVersions(api);
     await beanstalk.createEnvironment({
@@ -485,7 +485,7 @@ export async function reconfig(api) {
       EnvironmentName: environment,
       Description: `Environment for ${config.app.name}, managed by Meteor Up`,
       VersionLabel: version.toString(),
-      SolutionStackName: '64bit Amazon Linux 2 v5.4.2 running Node.js 14',
+      SolutionStackName: solutionStack,
       OptionSettings: desiredEbConfig.OptionSettings
     }).promise();
 
