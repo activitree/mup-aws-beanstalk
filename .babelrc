@@ -1,22 +1,6 @@
 {
   "plugins": [
-    "@babel/plugin-proposal-optional-chaining",
-    ["@babel/plugin-transform-runtime",
-      {
-        "regenerator": true
-      }
-    ]
-  ],
-  "presets": [
-    ["@babel/env",
-      {
-        "targets": [
-          "defaults",
-          "last 2 versions",
-          "not IE 11",
-          "node 12"
-        ]
-      }
-    ]
+      "@babel/plugin-proposal-object-rest-spread",
+      "@babel/plugin-transform-modules-commonjs"
   ]
 }
