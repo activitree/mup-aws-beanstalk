@@ -1,3 +1,18 @@
+## 0.7.10 - May 20, 2022
+
+- No changes, required for a republish
+
+
+## 0.7.9 - May 20, 2022
+
+- No changes, required for a republish
+
+
+## 0.7.8 - May 20, 2022
+
+- Downgrade Chalk npm
+
+
 ## 0.7.7 - May 20, 2022
 
 - Libraries Updates
