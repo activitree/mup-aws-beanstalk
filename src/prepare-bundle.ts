@@ -1,7 +1,7 @@
 import archiver from 'archiver';
 import fs from 'fs';
 import ejs from 'ejs';
-import { round } from 'lodash';
+import round from 'lodash.round';
 import path from 'path';
 import { getNodeVersion, logStep, names } from './utils';
 import { MupApi, MupAwsConfig } from "./types";

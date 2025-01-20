@@ -1,4 +1,4 @@
-import uniq from "lodash/uniq";
+import uniq from "lodash.uniq";
 import { GetLogEventsCommandInput } from "@aws-sdk/client-cloudwatch-logs";
 import { logs } from "./aws";
 import { MupApi } from "./types";

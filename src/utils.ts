@@ -1,7 +1,8 @@
 import axios from 'axios';
 import chalk from 'chalk';
 import fs from 'fs';
-import { isEqual, isString } from 'lodash';
+import isEqual from 'lodash.isequal'
+import isString from 'lodash.isstring'
 import os from 'os';
 import random from 'random-seed';
 import { v4 as uuidv4 } from 'uuid'
@@ -40,7 +41,7 @@ export function tmpBuildPath(appPath: string, api: MupApi) {
 
   return api.resolvePath(
     os.tmpdir(),
-    `mup-meteor-${uuidv4({ random: uuidNumbers })}`
+    `mup-meteor-${uuidv4({ random: Uint8Array.of(...uuidNumbers) })}`
   );
 }
 
