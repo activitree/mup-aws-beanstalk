@@ -376,7 +376,14 @@ export async function start (api: MupApi) {
     AutoScalingGroupName: autoScalingGroup,
     MaxSize: maxInstances,
     MinSize: minInstances,
-    DesiredCapacity: minInstances
+    DesiredCapacity: minInstances,
+		/*
+		LaunchTemplate: { // LaunchTemplateSpecification
+			LaunchTemplateId: "STRING_VALUE",
+			LaunchTemplateName: "STRING_VALUE",
+			Version: "STRING_VALUE",
+		}
+		 */
   });
 
   await waitForHealth(config, undefined, false);
