@@ -1,12 +1,12 @@
 import uniq from "lodash.uniq";
 import { GetLogEventsCommandInput } from "@aws-sdk/client-cloudwatch-logs";
-import { logs } from "./aws";
-import { MupApi } from "./types";
-import { logStreamEvent, names } from "./utils";
+import { logs } from "./aws.js";
+import { MupApi } from "./types.js";
+import { logStreamEvent, names } from "./utils.js";
 import { EventDescription } from "@aws-sdk/client-elastic-beanstalk";
 
 let instanceFinderInterval: NodeJS.Timeout | undefined;
-let activeInstanceListeners: { [instanceName: string]: NodeJS.Timeout } = {};
+const activeInstanceListeners: { [instanceName: string]: NodeJS.Timeout } = {};
 
 async function listen (
   logGroupName: string,
@@ -15,7 +15,7 @@ async function listen (
 ) {
   const params: GetLogEventsCommandInput = {
     logGroupName,
-    logStreamName,
+    logStreamName
   };
 
   if (nextToken) {

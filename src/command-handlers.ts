@@ -6,8 +6,8 @@ import {
   beanstalk,
   autoScaling,
   cloudTrail
-} from './aws';
-import { ensureSSLConfigured } from './certificates';
+} from './aws.js';
+import { ensureSSLConfigured } from './certificates.js';
 import {
   rolePolicy,
   trailBucketPolicy,
@@ -18,12 +18,12 @@ import {
   eventTargetRole,
   gracefulShutdownAutomationDocument,
   passRolePolicy
-} from './policies';
-import upload, { uploadEnvFile } from './upload';
+} from './policies.js';
+import upload, { uploadEnvFile } from './upload.js';
 import {
   archiveApp,
   injectFiles
-} from './prepare-bundle';
+} from './prepare-bundle.js';
 import {
   coloredStatusText,
   ensureBucketExists,
@@ -49,28 +49,28 @@ import {
   pickInstance,
   connectToInstance,
   executeSSHCommand
-} from './utils';
+} from './utils.js';
 import {
   largestVersion,
   ebVersions,
   oldVersions,
   oldEnvVersions
-} from './versions';
-import { createEnvFile } from './env-settings';
-import { MupApi } from "./types";
+} from './versions.js';
+import { createEnvFile } from './env-settings.js';
+import { MupApi } from "./types.js";
 import {
   createDesiredConfig,
   prepareUpdateEnvironment,
   scalingConfig,
   getEnvTierConfig,
   scalingConfigChanged
-} from './eb-config';
+} from './eb-config.js';
 
 import {
   waitForEnvReady,
   waitForHealth
-} from './env-ready';
-import { startLogStreamListener, stopLogStreamListener } from "./deployment-logs";
+} from './env-ready.js';
+import { startLogStreamListener, stopLogStreamListener } from "./deployment-logs.js";
 import { EventDescription } from "@aws-sdk/client-elastic-beanstalk";
 
 export async function setup (api: MupApi) {
@@ -376,7 +376,7 @@ export async function start (api: MupApi) {
     AutoScalingGroupName: autoScalingGroup,
     MaxSize: maxInstances,
     MinSize: minInstances,
-    DesiredCapacity: minInstances,
+    DesiredCapacity: minInstances
 		/*
 		LaunchTemplate: { // LaunchTemplateSpecification
 			LaunchTemplateId: "STRING_VALUE",
@@ -685,7 +685,7 @@ export async function ssl (api: MupApi) {
     if (DomainName === domains[0]) {
       const {
         Certificate
-      } = await acm.describeCertificate({ // eslint-disable-line no-await-in-loop
+      } = await acm.describeCertificate({  
         CertificateArn
       });
 
@@ -716,7 +716,7 @@ export async function ssl (api: MupApi) {
   let checks = 0;
   let certificate;
 
-  /* eslint-disable no-await-in-loop */
+   
   while (!emailsProvided && checks < 5) {
     const certRes = await acm.describeCertificate({
       CertificateArn: certificateArn

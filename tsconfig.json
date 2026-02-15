@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     /* Basic Options */
-    "target": "es2018",
-    "module": "CommonJS",
+    "target": "ES2022",
+    "module": "NodeNext",
     "lib": ["esnext", "dom"],
     "allowJs": true,
     "checkJs": false,
@@ -28,7 +28,7 @@
     "paths": {
       "/*": ["*"]
     },
-    "moduleResolution": "node",
+    "moduleResolution": "NodeNext",
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "preserveSymlinks": true,

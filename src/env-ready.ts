@@ -1,14 +1,14 @@
 import {
   logStep,
   names
-} from './utils';
-import { beanstalk } from './aws';
+} from './utils.js';
+import { beanstalk } from './aws.js';
 import {
   getRecheckInterval,
   checkForThrottlingException,
   handleThrottlingException
-} from './recheck';
-import { MupConfig } from "./types";
+} from './recheck.js';
+import { MupConfig } from "./types.js";
 import { EnvironmentDescription, EventDescription } from "@aws-sdk/client-elastic-beanstalk";
 
 export async function getLastEvent(config: MupConfig) {
@@ -137,7 +137,7 @@ async function checker (
 export async function waitForEnvReady (
   config: MupConfig,
   showProgress: boolean,
-  eventHistory: EventDescription[] = [],
+  eventHistory: EventDescription[] = []
 ) {
   await checker(config, 'Status', 'Ready', showProgress, eventHistory);
 }

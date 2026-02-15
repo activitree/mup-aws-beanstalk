@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { s3 } from './aws';
+import { s3 } from './aws.js';
 import { Upload } from "@aws-sdk/lib-storage";
 
 export default async function upload (
@@ -15,12 +15,12 @@ export default async function upload (
   const params = {
     Bucket: bucket,
     Key: key,
-    Body: fileStream,
+    Body: fileStream
   };
 
   const uploader = new Upload({
     client: s3,
-    params,
+    params
   });
 
   let lastPercentage = -1;

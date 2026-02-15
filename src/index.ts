@@ -1,6 +1,6 @@
-import * as _commands from './commands';
-import validator from './validate';
-import { MupConfig, MupApi, MupUtils } from "./types";
+import * as _commands from './commands.js';
+import validator from './validate.js';
+import { MupConfig, MupApi, MupUtils } from "./types.js";
 
 export const name = 'beanstalk';
 export const description = 'Deploy Meteor app to AWS Elastic Beanstalk';

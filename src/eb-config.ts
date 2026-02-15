@@ -1,13 +1,17 @@
 import difference from 'lodash.difference';
-import { beanstalk } from './aws';
-import downloadEnvFile from './download';
-import { createEnvFile } from './env-settings';
-import { uploadEnvFile } from './upload';
-import { names } from './utils';
-import { largestEnvVersion } from './versions';
-import { EBConfigDictionary, EBConfigElement, MeteorSettings, MupApi, MupAwsConfig, MupConfig } from "./types";
+import { beanstalk } from './aws.js';
+import downloadEnvFile from './download.js';
+import { createEnvFile } from './env-settings.js';
+import { uploadEnvFile } from './upload.js';
+import { names } from './utils.js';
+import { largestEnvVersion } from './versions.js';
+import { EBConfigDictionary, EBConfigElement, MeteorSettings, MupApi, MupAwsConfig, MupConfig } from "./types.js";
 import { ConfigurationOptionSetting, EnvironmentTier } from "@aws-sdk/client-elastic-beanstalk";
 
+/**
+ * Creates the desired Elastic Beanstalk configuration
+ * Supports both legacy Launch Configuration and modern Launch Template namespaces
+ */
 export function createDesiredConfig(
   mupConfig: MupConfig,
   settings: MeteorSettings,
@@ -16,13 +20,25 @@ export function createDesiredConfig(
   const {
     env,
     instanceType,
+    instanceTypes,
+    spotInstances,
+    disableIMDSv1,
+    rootVolume,
+    launchTemplateTagPropagation,
     streamLogs,
-    customBeanstalkConfig = []
+    customBeanstalkConfig = [],
+    secretsManager,
+    trafficSplitting
   } = mupConfig.app;
   const {
     instanceProfile,
     serviceRole
   } = names(mupConfig);
+
+  // Build instance type value - prefer instanceTypes array over single instanceType
+  const instanceTypesValue = instanceTypes?.length
+    ? instanceTypes.join(',')
+    : instanceType;
 
   const config = {
     OptionSettings: [{
@@ -46,10 +62,13 @@ export function createDesiredConfig(
       OptionName: 'LowerThreshold',
       Value: '35'
     }, {
-      Namespace: 'aws:autoscaling:launchconfiguration',
-      OptionName: 'InstanceType',
-      Value: instanceType
+      // Use aws:ec2:instances namespace for Launch Template features
+      // This is the modern approach recommended by AWS
+      Namespace: 'aws:ec2:instances',
+      OptionName: 'InstanceTypes',
+      Value: instanceTypesValue
     }, {
+      // IAM Instance Profile - still uses launchconfiguration namespace
       Namespace: 'aws:autoscaling:launchconfiguration',
       OptionName: 'IamInstanceProfile',
       Value: instanceProfile
@@ -108,11 +127,120 @@ export function createDesiredConfig(
     }]
   };
 
+  // Add Spot Instance configuration (Launch Template feature)
+  if (spotInstances?.enabled) {
+    config.OptionSettings.push({
+      Namespace: 'aws:ec2:instances',
+      OptionName: 'EnableSpot',
+      Value: 'true'
+    });
+
+    if (spotInstances.instanceTypes?.length) {
+      config.OptionSettings.push({
+        Namespace: 'aws:ec2:instances',
+        OptionName: 'InstanceTypes',
+        Value: spotInstances.instanceTypes.join(',')
+      });
+    }
+
+    if (spotInstances.spotAllocationStrategy) {
+      config.OptionSettings.push({
+        Namespace: 'aws:ec2:instances',
+        OptionName: 'SpotAllocationStrategy',
+        Value: spotInstances.spotAllocationStrategy
+      });
+    }
+
+    if (spotInstances.onDemandBase !== undefined) {
+      config.OptionSettings.push({
+        Namespace: 'aws:ec2:instances',
+        OptionName: 'SpotFleetOnDemandBase',
+        Value: spotInstances.onDemandBase.toString()
+      });
+    }
+
+    if (spotInstances.onDemandAboveBasePercentage !== undefined) {
+      config.OptionSettings.push({
+        Namespace: 'aws:ec2:instances',
+        OptionName: 'SpotFleetOnDemandAboveBasePercentage',
+        Value: spotInstances.onDemandAboveBasePercentage.toString()
+      });
+    }
+  }
+
+  // IMDSv2 enforcement (triggers Launch Template migration)
+  if (disableIMDSv1) {
+    config.OptionSettings.push({
+      Namespace: 'aws:autoscaling:launchconfiguration',
+      OptionName: 'DisableIMDSv1',
+      Value: 'true'
+    });
+  }
+
+  // Root volume configuration (triggers Launch Template migration)
+  if (rootVolume) {
+    config.OptionSettings.push({
+      Namespace: 'aws:autoscaling:launchconfiguration',
+      OptionName: 'RootVolumeSize',
+      Value: rootVolume.size.toString()
+    });
+
+    if (rootVolume.type) {
+      config.OptionSettings.push({
+        Namespace: 'aws:autoscaling:launchconfiguration',
+        OptionName: 'RootVolumeType',
+        Value: rootVolume.type
+      });
+    }
+
+    if (rootVolume.iops) {
+      config.OptionSettings.push({
+        Namespace: 'aws:autoscaling:launchconfiguration',
+        OptionName: 'RootVolumeIOPS',
+        Value: rootVolume.iops.toString()
+      });
+    }
+  }
+
+  // Tag propagation to Launch Templates
+  if (launchTemplateTagPropagation) {
+    config.OptionSettings.push({
+      Namespace: 'aws:autoscaling:launchconfiguration',
+      OptionName: 'LaunchTemplateTagPropagationEnabled',
+      Value: 'true'
+    });
+  }
+
   if (streamLogs) {
     config.OptionSettings.push({
       Namespace: 'aws:elasticbeanstalk:cloudwatch:logs',
       OptionName: 'StreamLogs',
       Value: 'true'
+    }, {
+      Namespace: 'aws:elasticbeanstalk:cloudwatch:logs',
+      OptionName: 'DeleteOnTerminate',
+      Value: 'false'
+    }, {
+      Namespace: 'aws:elasticbeanstalk:cloudwatch:logs',
+      OptionName: 'RetentionInDays',
+      Value: '30'
+    });
+  }
+
+  // Traffic Splitting Deployment Strategy (Canary testing - AWS feature from 2024)
+  if (trafficSplitting?.enabled) {
+    config.OptionSettings.push({
+      Namespace: 'aws:elasticbeanstalk:command',
+      OptionName: 'DeploymentPolicy',
+      Value: 'TrafficSplitting'
+    }, {
+      Namespace: 'aws:elasticbeanstalk:trafficsplitting',
+      OptionName: 'NewVersionPercent',
+      Value: trafficSplitting.newVersionPercent?.toString() || '15'
+    }, {
+      Namespace: 'aws:elasticbeanstalk:trafficsplitting',
+      OptionName: 'EvaluationTime',
+      Value: trafficSplitting.evaluationTime?.toString() || '10'
     });
   }
 
@@ -123,6 +251,14 @@ export function createDesiredConfig(
       Namespace: 'aws:elasticbeanstalk:application:environment',
       OptionName: 'MUP_ENV_FILE_VERSION',
       Value: longEnvVarsVersion.toString()
+    });
+  } else if (secretsManager?.enabled) {
+    secretsManager.secrets.forEach(secret => {
+      config.OptionSettings.push({
+        Namespace: 'aws:elasticbeanstalk:application:environment',
+        OptionName: secret.name,
+        Value: secret.arn
+      });
     });
   } else {
     env.METEOR_SETTINGS_ENCODED = encodeURIComponent(settingsString);

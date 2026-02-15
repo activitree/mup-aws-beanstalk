@@ -8,10 +8,10 @@ import random from 'random-seed';
 import { v4 as uuidv4 } from 'uuid'
 import { Client } from "ssh2";
 import { execSync } from 'child_process';
-import { beanstalk, cloudWatchEvents, iam, s3, sts, ssm, ec2, ec2InstanceConnect } from './aws';
-import { getRecheckInterval } from './recheck';
-import { waitForEnvReady } from './env-ready';
-import { MupApi, MupAwsConfig, MupConfig, Buckets } from "./types";
+import { beanstalk, cloudWatchEvents, iam, s3, sts, ssm, ec2, ec2InstanceConnect } from './aws.js';
+import { getRecheckInterval } from './recheck.js';
+import { waitForEnvReady } from './env-ready.js';
+import { MupApi, MupAwsConfig, MupConfig, Buckets } from "./types.js";
 import { EnvironmentInfoDescription } from "@aws-sdk/client-elastic-beanstalk";
 import { AttachRolePolicyCommandOutput } from "@aws-sdk/client-iam";
 import { Target } from "@aws-sdk/client-cloudwatch-events";
@@ -214,9 +214,21 @@ export async function selectPlatformArn() {
     ]
   });
 
-  const arn = PlatformSummaryList![0].PlatformArn;
+  // Sort by PlatformVersion in descending order to get the latest version
+  // PlatformVersion is a string like "x.x.x" that can be compared
+  const sortedPlatforms = PlatformSummaryList!.sort((a, b) => {
+    const aVersion = a.PlatformVersion || '0';
+    const bVersion = b.PlatformVersion || '0';
+    return bVersion.localeCompare(aVersion, undefined, { numeric: true });
+  });
 
-  return arn;
+  const latestPlatform = sortedPlatforms[0];
+  
+  if (!latestPlatform) {
+    throw new Error('No platform versions found');
+  }
+
+  return latestPlatform.PlatformArn!;
 }
 
 export async function attachPolicies(roleName: string, policies: string[]) {
@@ -259,7 +271,7 @@ export async function ensureRoleExists(
     if (currentAssumeRolePolicy !== consistentAssumeRolePolicyDocument && ensureAssumeRolePolicy) {
       updateAssumeRolePolicy = true;
     }
-  } catch (e) {
+  } catch {
     exists = false;
   }
 
@@ -283,7 +295,7 @@ export async function ensureInstanceProfileExists(name: string) {
     await iam.getInstanceProfile({
       InstanceProfileName: name
     });
-  } catch (e) {
+  } catch {
     exists = false;
   }
 
@@ -316,7 +328,7 @@ export async function ensureRoleAdded(instanceProfile: string, role: string) {
 }
 
 export async function ensurePoliciesAttached(role: string, policies: string[]) {
-  let {
+  const {
     AttachedPolicies
   } = await iam.listAttachedRolePolicies({
     RoleName: role
@@ -355,7 +367,7 @@ export async function ensureInlinePolicyAttached(
     if (currentPolicyDocument !== policyDocument) {
       needsUpdating = true;
     }
-  } catch (e) {
+  } catch {
     exists = false;
   }
 
@@ -405,7 +417,7 @@ export async function ensureBucketPolicyAttached(
   try {
     const { Policy } = await s3.getBucketPolicy({ Bucket: bucketName });
     currentPolicy = Policy;
-  } catch (e) {
+  } catch {
     error = true;
   }
 
@@ -428,7 +440,7 @@ export async function ensureCloudWatchRule(
 
   try {
     await cloudWatchEvents.describeRule({ Name: name });
-  } catch (e) {
+  } catch {
     error = true;
   }
 
@@ -484,7 +496,7 @@ export function createVersionDescription(api: MupApi, appConfig: MupAwsConfig) {
       cwd: appPath,
       stdio: 'pipe'
     }).toString();
-  } catch (e) {
+  } catch {
     description = `Deployed by Mup on ${new Date().toUTCString()}`;
   }
   return description.split('\n')[0].slice(0, 195);
@@ -502,7 +514,7 @@ export async function ensureSsmDocument(name: string, content: string) {
     if (currentContent !== content) {
       needsUpdating = true;
     }
-  } catch (e) {
+  } catch {
     exists = false;
   }
 
@@ -521,13 +533,13 @@ export async function ensureSsmDocument(name: string, content: string) {
         Name: name,
         DocumentVersion: '$LATEST'
       });
-    } catch (e) {
+    } catch (err) {
       // If the latest document version has the correct content
       // then it must not be the default version. Ignore the error
       // so we can fix the default version
       // @ts-ignore
-      if (e.code !== 'DuplicateDocumentContent') {
-        throw e;
+      if (err.code !== 'DuplicateDocumentContent') {
+        throw err;
       }
     }
 
@@ -614,14 +626,14 @@ export async function connectToInstance(
     });
 
     ruleIds = SecurityGroupRules!.map(rule => rule.SecurityGroupRuleId!);
-  } catch (e) {
+  } catch (err) {
     // @ts-ignore
-    if (e.code === 'InvalidPermission.Duplicate') {
+    if (err.code === 'InvalidPermission.Duplicate') {
       // This rule already exists
       // TODO: should we find the rule id so we can remove it, or leave it in
       // case the user had manually added this rule?
     } else {
-      throw e;
+      throw err;
     }
   }
 

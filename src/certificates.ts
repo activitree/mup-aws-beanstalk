@@ -1,8 +1,8 @@
-import { beanstalk } from './aws';
-import { names } from './utils';
-import { convertToObject } from './eb-config';
-import { waitForEnvReady } from './env-ready';
-import { EBConfigDictionary, MupConfig } from "./types";
+import { beanstalk } from './aws.js';
+import { names } from './utils.js';
+import { convertToObject } from './eb-config.js';
+import { waitForEnvReady } from './env-ready.js';
+import { EBConfigDictionary, MupConfig } from "./types.js";
 
 export async function ensureSSLConfigured(
   config: MupConfig,
@@ -41,7 +41,7 @@ export async function ensureSSLConfigured(
   const { ConfigurationSettings } = await beanstalk
     .describeConfigurationSettings({
       EnvironmentName: environment,
-      ApplicationName: app,
+      ApplicationName: app
     });
 
   const firstConfig = ConfigurationSettings?.[0];
@@ -63,7 +63,7 @@ export async function ensureSSLConfigured(
   await beanstalk
     .updateEnvironment({
       EnvironmentName: environment,
-      OptionSettings: ebConfig,
+      OptionSettings: ebConfig
     });
   await waitForEnvReady(config, true);
 }

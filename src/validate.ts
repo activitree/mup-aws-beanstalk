@@ -1,5 +1,5 @@
 import joi from 'joi';
-import { MupUtils, MupConfig } from "./types";
+import { MupUtils, MupConfig } from "./types.js";
 
 const schema = joi.object().keys({
   name: joi.string().min(1).required(),
@@ -30,6 +30,32 @@ const schema = joi.object().keys({
   minInstances: joi.number().min(1).required(),
   maxInstances: joi.number().min(1),
   instanceType: joi.string(),
+  // New: Multiple instance types for Launch Template
+  instanceTypes: joi.array().items(joi.string()),
+  // New: Spot Instance configuration
+  spotInstances: joi.object({
+    enabled: joi.boolean().required(),
+    instanceTypes: joi.array().items(joi.string()),
+    spotAllocationStrategy: joi.string().valid(
+      'capacity-optimized-prioritized',
+      'lowest-price',
+      'capacity-optimized',
+      'price-capacity-optimized'
+    ),
+    onDemandBase: joi.number().min(0),
+    onDemandAboveBasePercentage: joi.number().min(0).max(100)
+  }),
+  // New: IMDSv2 enforcement (triggers Launch Template migration)
+  disableIMDSv1: joi.boolean(),
+  // New: Root volume configuration
+  rootVolume: joi.object({
+    size: joi.number().min(8).required(),
+    type: joi.string().valid('gp2', 'gp3', 'io1', 'io2', 'standard'),
+    iops: joi.number().min(100),
+    throughput: joi.number().min(125)
+  }),
+  // New: Tag propagation to launch templates
+  launchTemplateTagPropagation: joi.boolean(),
   gracefulShutdown: joi.bool(),
   longEnvVars: joi.bool(),
   yumPackages: joi.object().pattern(
@@ -61,6 +87,16 @@ export default function (config: MupConfig, utils: MupUtils) {
       message: 'must have at least 4 characters',
       path: 'name'
     });
+  }
+
+  // Validate Spot Instance configuration
+  if (config.app?.spotInstances?.enabled) {
+    if (!config.app.instanceTypes?.length && !config.app.spotInstances.instanceTypes?.length) {
+      details.push({
+        message: 'instanceTypes or spotInstances.instanceTypes is required when Spot Instances are enabled',
+        path: 'spotInstances'
+      });
+    }
   }
 
   return utils.addLocation(details, 'app');

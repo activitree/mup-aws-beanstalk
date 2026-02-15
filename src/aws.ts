@@ -10,9 +10,8 @@ import { EC2InstanceConnect } from '@aws-sdk/client-ec2-instance-connect';
 import { STS } from '@aws-sdk/client-sts';
 import { SSM } from '@aws-sdk/client-ssm';
 import { EC2 } from '@aws-sdk/client-ec2';
-import { MupAwsConfig } from "./types";
+import { MupAwsConfig } from "./types.js";
 
-/* eslint-disable import/no-mutable-exports */
 export let s3: S3;
 export let beanstalk: ElasticBeanstalk;
 export let iam: IAM;
@@ -26,8 +25,6 @@ export let ec2: EC2;
 export let logs: CloudWatchLogs;
 export let ec2InstanceConnect: EC2InstanceConnect;
 
-/* eslint-enable import/no-mutable-exports */
-
 const MAX_RETRY_DELAY = 1000 * 60 * 2;
 // const AWS_UPLOAD_TIMEOUT = 1000 * 60 * 60;
 
@@ -35,7 +32,7 @@ export default function configure ({ auth, name: _name, region }: MupAwsConfig) 
   const commonOptions = {
     credentials: {
       accessKeyId: auth.id,
-      secretAccessKey: auth.secret,
+      secretAccessKey: auth.secret
     },
     region: region || 'us-east-1',
     maxRetries: 25,
@@ -45,7 +42,7 @@ export default function configure ({ auth, name: _name, region }: MupAwsConfig) 
   };
 
   s3 = new S3({
-    ...commonOptions,
+    ...commonOptions
     // params: { Bucket: `mup-${name}` },
     // httpOptions: { timeout: AWS_UPLOAD_TIMEOUT },
   });

@@ -1,6 +1,6 @@
-import * as commandHandlers from './command-handlers';
-import configure from './aws';
-import { MupApi } from "./types";
+import * as commandHandlers from './command-handlers.js';
+import configure from './aws.js';
+import { MupApi } from "./types.js";
 
 let prepared = false;
 

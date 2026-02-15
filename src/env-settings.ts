@@ -1,5 +1,5 @@
 import shellEscape from 'shell-escape';
-import { MeteorSettings, Env } from "./types";
+import { MeteorSettings, Env } from "./types.js";
 
 export function createEnvFile(
   env: Env,

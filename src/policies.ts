@@ -51,6 +51,30 @@ export const passRolePolicy = (accountId: string, role: string) => {
   return JSON.stringify(policy);
 };
 
+/**
+ * IAM policy for Launch Template support
+ * Required for Elastic Beanstalk environments using Launch Templates
+ * These permissions are included in AWS managed policies for Elastic Beanstalk
+ */
+export const launchTemplatePolicy = JSON.stringify({
+  Version: '2012-10-17',
+  Statement: [
+    {
+      Effect: 'Allow',
+      Action: [
+        'ec2:RunInstances',
+        'ec2:CreateLaunchTemplate',
+        'ec2:CreateLaunchTemplateVersions',
+        'ec2:DeleteLaunchTemplate',
+        'ec2:DeleteLaunchTemplateVersions',
+        'ec2:DescribeLaunchTemplates',
+        'ec2:DescribeLaunchTemplateVersions'
+      ],
+      Resource: ['*']
+    }
+  ]
+});
+
 export function eventTargetRolePolicy(accountId: string, env: string, region: string) {
   const policy = {
     Version: '2012-10-17',

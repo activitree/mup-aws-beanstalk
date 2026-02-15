@@ -2,9 +2,9 @@ import difference from 'lodash.difference';
 import {
   beanstalk,
   s3
-} from './aws';
-import { names } from './utils';
-import { MupApi } from "./types";
+} from './aws.js';
+import { names } from './utils.js';
+import { MupApi } from "./types.js";
 
 export async function ebVersions(api: MupApi) {
   const config = api.getConfig();

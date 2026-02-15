@@ -3,8 +3,13 @@ import fs from 'fs';
 import ejs from 'ejs';
 import round from 'lodash.round';
 import path from 'path';
-import { getNodeVersion, logStep, names } from './utils';
-import { MupApi, MupAwsConfig } from "./types";
+import { fileURLToPath } from 'url';
+import { getNodeVersion, logStep, names } from './utils.js';
+import { MupApi, MupAwsConfig } from "./types.js";
+
+// ES module equivalent of __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 function copyFolderSync(src: string, dest: string) {
   if (!fs.existsSync(src)) return;
@@ -172,7 +177,7 @@ export function archiveApp(buildLocation: string, api: MupApi) {
 
   try {
     fs.unlinkSync(bundlePath);
-  } catch (e) {
+  } catch {
     // empty
   }
 

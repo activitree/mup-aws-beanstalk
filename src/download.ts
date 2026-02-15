@@ -1,4 +1,4 @@
-import { s3 } from './aws';
+import { s3 } from './aws.js';
 
 export default async function downloadEnvFile(bucket: string, version: number) {
   const result = await s3.getObject({
